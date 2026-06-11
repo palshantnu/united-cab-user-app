@@ -1,4 +1,4 @@
-package com.united_cabs
+package com.united_cabs_merthyr
 
 import android.app.Application
 import com.facebook.react.PackageList

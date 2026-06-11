@@ -1,4 +1,4 @@
-package com.united_cabs
+package com.united_cabs_merthyr
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
