@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -26,37 +26,37 @@ import { CommonActions } from '@react-navigation/native';
 const { width } = Dimensions.get('window');
 
 const OtpScreen = ({ navigation, route }) => {
-    const { otp1, phone, country_code, fcmToken } = route.params
+    const { flow, confirmation, phone, fcmToken, registrationData } = route.params
     const [loading, setLoading] = useState(false);
-    // alert(otp1)
     const { t } = useTranslation();
     const otpInput = useRef(null);
     const [otp, setOtp] = useState('');
     const dispatch = useDispatch();
-    useEffect(() => {
-        Alert.alert(otp1);
-    }, [otp1])
-    const handleVerify = async () => {
 
+    const handleVerify = async () => {
 
         if (otp.length < 6) {
             alert(i18n.t('enterOtp'));
             return;
         }
         setLoading(true);
-        const body = {
-            phone,
-            country_code,
-            otp_code: otp,
-            devicetoken: fcmToken
-        };
-        console.log('fl');
-        console.log('body == > ', body);
+        try {
+            await confirmation.confirm(otp);
+        } catch (error) {
+            console.log('firebase-confirm-otp-error==>', error);
+            setLoading(false);
+            CustomToast.show(error?.message || i18n.t('enterOtp'));
+            return;
+        }
 
-        const res = await postData('user/verify-otp', body);
+        const body = flow === 'register'
+            ? { ...registrationData, devicetoken: fcmToken }
+            : { phone, devicetoken: fcmToken };
+
+        const res = await postData(flow === 'register' ? 'user/register' : 'user/login', body);
         console.log('res==>', res);
         setLoading(false);
-        if (res.message == 'Login successful') {
+        if (res.user) {
             CustomToast.show(res.message)
             dispatch({
                 type: 'SET_USER',
@@ -69,13 +69,9 @@ const OtpScreen = ({ navigation, route }) => {
                     routes: [{ name: 'HomeStack' }],
                 }),
             );
-            // navigation.navigate('BottomTabNavigator')
         } else {
-            // ToastAndroid.show(res.message, ToastAndroid.BOTTOM);
             CustomToast.show(res.message)
         }
-
-        // navigation.navigate('OtpScreen');
 
     };
 

@@ -38,7 +38,7 @@ const HistoryScreen = ({ navigation }) => {
         try {
             const body = { user_id: user.id };
             const res = await postData('rides/user/history', body);
-
+console.log('History response:', res);
             if (res?.bookings?.length > 0) {
                 setBookingsList(res.bookings);
                 

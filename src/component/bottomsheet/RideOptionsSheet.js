@@ -17,7 +17,7 @@ const RideOptionsSheet = ({ pickup, drop, sheetRef, onSelect }) => {
         const res = await getData('vehicle-types');
 
         const formattedData = res.vehicle_types.map(item => ({
-            label: item.type_name,
+            label: item.label || item.type_name,
             value: item.id.toString(), // Use string if DropDownPicker expects string
             minimum_km: item.minimum_km,
             minimum_fare: item.minimum_fare,

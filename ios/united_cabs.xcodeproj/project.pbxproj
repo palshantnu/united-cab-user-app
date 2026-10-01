@@ -368,7 +368,7 @@
 				CODE_SIGN_ENTITLEMENTS = united_cabs/united_cabs.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 11;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_TEAM = 35PD2956Q4;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = united_cabs/Info.plist;
@@ -378,7 +378,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.10;
+				MARKETING_VERSION = 1.0.13;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -402,7 +402,7 @@
 				CODE_SIGN_ENTITLEMENTS = united_cabs/united_cabs.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 11;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_TEAM = 35PD2956Q4;
 				INFOPLIST_FILE = united_cabs/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "United Cabs";
@@ -411,7 +411,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.10;
+				MARKETING_VERSION = 1.0.13;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

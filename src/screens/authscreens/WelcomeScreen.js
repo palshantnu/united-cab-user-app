@@ -30,9 +30,15 @@ const WelcomeScreen = ({ navigation }) => {
             <View style={styles.bottomButtons}>
                 <TouchableOpacity
                     style={styles.button}
-                    onPress={() => navigation.navigate('LoginScreen')} // or 'SignUp' if you renamed it
+                    onPress={() => navigation.navigate('LoginScreen')}
                 >
                     <Text style={styles.buttonText}>{t('ContinueWithPhone')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={styles.outlinedButton}
+                    onPress={() => navigation.navigate('SignUp')}
+                >
+                    <Text style={styles.outlinedButtonText}>{t('CreateAccount')}</Text>
                 </TouchableOpacity>
             </View>
             {/* <TouchableOpacity onPress={() => i18n.changeLanguage(i18n.language === 'en' ? 'hi' : 'en')}>

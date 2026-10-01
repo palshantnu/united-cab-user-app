@@ -18,7 +18,7 @@
   "AlreadyHaveAccount": "Already have an account?",
   "SignIn": "Sign in",
   "PhoneVerification": "Phone Verification",
-  "EnterOTPMessage": "Enter the 4-digit code sent to your mobile",
+  "EnterOTPMessage": "Enter the 6-digit code sent to your mobile",
   "DidntReceiveCode": "Didn’t receive the code?",
   "Resend": "Resend again",
   "VerifyOTP": "Verify OTP",

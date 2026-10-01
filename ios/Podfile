@@ -11,7 +11,7 @@ prepare_react_native_project!
 
 use_frameworks! :linkage => :dynamic
 
-target 'united_cab_driver' do
+target 'united_cabs' do
   config = use_native_modules!
 
   pod 'GoogleUtilities'
@@ -23,8 +23,8 @@ target 'united_cab_driver' do
   use_react_native!(
     :path => config[:reactNativePath],
     :hermes_enabled => true,
-    :fabric_enabled => false,
-    :new_arch_enabled => false, # IMPORTANT
+    :fabric_enabled => true,
+    :new_arch_enabled => true,
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 

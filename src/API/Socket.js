@@ -10,4 +10,15 @@ const Socket = io(SOCKET_URL, {
   timeout: 10000,
   autoConnect: true,   
 });
+Socket.on('connect', () => {
+  console.log('SOCKET CONNECTED', Socket.id);
+});
+
+Socket.on('disconnect', reason => {
+  console.log('SOCKET DISCONNECTED:', reason);
+});
+
+Socket.on('connect_error', err => {
+  console.log('SOCKET ERROR:', err.message);
+});
 export default Socket;

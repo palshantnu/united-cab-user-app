@@ -15,30 +15,24 @@ import CustomDropdownComponent from '../../component/CustomDropdownComponent';
 import { Color } from '../../theme';
 import Topbar from '../../component/Topbar';
 import { useTranslation } from 'react-i18next';
-import { postData } from '../../API';
 import AppInputComponent from '../../component/AppInputComponent';
 import { countriesData } from '../../constant/Countrydata';
 import { CustomToast } from '../../component/ToastConfig';
 import { getSyncData, storeDatasync } from '../../storage/AsyncStorage';
 import messaging from '@react-native-firebase/messaging';
-import auth from '@react-native-firebase/auth';
+import { getAuth, signInWithPhoneNumber } from '@react-native-firebase/auth';
 const LoginScreen = ({ navigation }) => {
     const [selectedCountry, setSelectedCountry] = useState(null);
     const [phoneNumber, setPhoneNumber] = useState('');
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const { t } = useTranslation();
-    const [confirm, setConfirm] = useState(null);
 
     const handleCountrySelect = (item) => {
         setSelectedCountry(item);
         if (errors.country) {
             setErrors(prev => ({ ...prev, country: '' }));
         }
-    };
-    const signInWithPhoneNumber = async (phoneNumber) => {
-        const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
-        setConfirm(confirmation);
     };
 
     const validateForm = () => {
@@ -96,32 +90,20 @@ const LoginScreen = ({ navigation }) => {
         setupPush();
     }, []);
     const SendOtp = async (fcmToken) => {
-        console.log('dne');
-        
         if (!validateForm()) return;
-        console.log('dne1');
         setLoading(true);
+        const countryCode = selectedCountry?.country_code || '';
         try {
-            const body = {
+            const confirmation = await signInWithPhoneNumber(getAuth(), `${countryCode}${phoneNumber}`);
+            navigation.navigate('OtpScreen', {
+                flow: 'login',
+                confirmation,
                 phone: phoneNumber,
-                country_code: selectedCountry?.country_code || '',
-            };
-            console.log('dne1',body);
-            const res = await postData('user/send-otp', body);
-            console.log('OTP Response:', res);
-            console.log('dne1',res);
-            if (res.message == 'OTP sent successfully') {
-                CustomToast.show(res.message)
-                navigation.navigate('OtpScreen', {
-                    otp1: res.OTP,
-                    phone: phoneNumber,
-                    country_code: selectedCountry?.country_code || '',
-                    fcmToken: fcmToken
-                });
-            }
-            CustomToast.show(res.message)
+                fcmToken: fcmToken
+            });
         } catch (error) {
-            console.error('Send OTP error:', error);
+            console.log('firebase-signInWithPhoneNumber-error==>', error);
+            CustomToast.show(error?.message || t('SomethingWentWrong'))
         } finally {
             setLoading(false);
         }
