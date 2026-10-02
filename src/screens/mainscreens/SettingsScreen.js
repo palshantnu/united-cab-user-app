@@ -7,6 +7,7 @@ import {
     ScrollView,
     SafeAreaView,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Color } from '../../theme';
@@ -20,6 +21,7 @@ import { postData } from '../../API';
 const SettingsScreen = ({ navigation }) => {
     const { t } = useTranslation();
     const [unreadCount, setUnreadCount] = useState(0);
+    const [deleting, setDeleting] = useState(false);
     const settingsOptions = [
         { id: 'profile', label: t('profile'), icon: 'person-outline' },
         { id: 'HistoryScreenWithback', label: t('ride_history'), icon: 'time-outline' },
@@ -53,48 +55,20 @@ const SettingsScreen = ({ navigation }) => {
         );
     };
     const deleteAccount = async () => {
+        if (deleting) return;
+        setDeleting(true);
         try {
-            const user_id = user.id;
-
-            const response = await fetch(
-                'https://unitedcabsmerthyr.uk/api/user/delete', // 👈 confirm endpoint
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ user_id }),
-                }
-            );
-
-            const result = await response.json();
-            console.log('delete user result:', result);
-
-            if (response.ok) {
-                Alert.alert(
-                    t('Account Deleted'),
-                    t('Account Deleted Successfully'),
-                    [
-                        {
-                            text: 'OK',
-                            onPress: () => {
-                                dispatch({ type: 'LOGOUT' });
-                                navigation.dispatch(
-                                    CommonActions.reset({
-                                        index: 0,
-                                        routes: [{ name: 'Welcome' }],
-                                    })
-                                );
-                            },
-                        },
-                    ]
-                );
+            const result = await postData('user/delete', { user_id: user.id });
+            if (result?.success) {
+                Alert.alert(t('Account Deleted'), t('Account Deleted Successfully'), [{ text: 'OK', onPress: logoutUser }], { cancelable: false });
             } else {
-                Alert.alert(t('error'), result?.message || 'Something went wrong');
+                Alert.alert('Error', result?.message || 'Unable to delete account. Please try again.');
             }
         } catch (error) {
-            console.log('User delete error:', error);
-            Alert.alert(t('error'), 'Unable to delete account');
+            console.log('Delete account error:', error);
+            Alert.alert('Error', 'Unable to delete account. Please check your internet connection.');
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -146,9 +120,13 @@ const SettingsScreen = ({ navigation }) => {
                         key={item.id}
                         style={styles.option}
                         onPress={() => handleOptionPress(item.id)}
+                        disabled={item.id === 'delete' && deleting}
                     >
                         <Ionicons name={item.icon} size={22} color="#555" style={styles.icon} />
                         <Text style={styles.label}>{item.label}</Text>
+                        {item.id === 'delete' && deleting && (
+                            <ActivityIndicator size="small" color="#e53935" style={{ marginRight: 8 }} />
+                        )}
                         {item.id === 'notifications' && unreadCount > 0 && (
                             <View style={styles.badge}>
                                 <Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
