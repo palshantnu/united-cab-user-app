@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
     View,
     Text,
@@ -12,12 +12,14 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Color } from '../../theme';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { CommonActions } from '@react-navigation/native';
+import { CommonActions, useFocusEffect } from '@react-navigation/native';
+import { postData } from '../../API';
 
 
 
 const SettingsScreen = ({ navigation }) => {
     const { t } = useTranslation();
+    const [unreadCount, setUnreadCount] = useState(0);
     const settingsOptions = [
         { id: 'profile', label: t('profile'), icon: 'person-outline' },
         { id: 'HistoryScreenWithback', label: t('ride_history'), icon: 'time-outline' },
@@ -31,6 +33,15 @@ const SettingsScreen = ({ navigation }) => {
     ];
     const user = useSelector(state => state.user);
     const dispatch = useDispatch();
+
+    useFocusEffect(
+        useCallback(() => {
+            if (!user?.id) return;
+            postData('notifications/unread-count', { type: 'user', id: user.id }).then(res => {
+                if (res?.success) setUnreadCount(res.unread_count);
+            });
+        }, [user?.id])
+    );
     const logoutUser = () => {
         dispatch({ type: 'LOGOUT' });
 
@@ -111,6 +122,9 @@ const SettingsScreen = ({ navigation }) => {
     } else if (id == 'HistoryScreenWithback') {
         navigation.navigate('HistoryScreenWithback')
 
+    } else if (id === 'notifications') {
+        navigation.navigate('NotificationScreen');
+
     } else if (id === 'terms') {
         navigation.navigate('CmsScreen', { type: 'terms' });
 
@@ -135,6 +149,11 @@ const SettingsScreen = ({ navigation }) => {
                     >
                         <Ionicons name={item.icon} size={22} color="#555" style={styles.icon} />
                         <Text style={styles.label}>{item.label}</Text>
+                        {item.id === 'notifications' && unreadCount > 0 && (
+                            <View style={styles.badge}>
+                                <Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+                            </View>
+                        )}
                         <Ionicons name="chevron-forward" size={20} color="#aaa" />
                     </TouchableOpacity>
                 ))}
@@ -173,6 +192,21 @@ const styles = StyleSheet.create({
     },
     icon: {
         marginRight: 15,
+    },
+    badge: {
+        minWidth: 22,
+        height: 22,
+        borderRadius: 11,
+        paddingHorizontal: 6,
+        backgroundColor: '#e53935',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 8,
+    },
+    badgeText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: '700',
     },
     label: {
         flex: 1,

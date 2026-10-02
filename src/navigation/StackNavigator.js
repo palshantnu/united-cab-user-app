@@ -8,6 +8,7 @@ import BookingDetailsScreen from '../screens/mainscreens/BookingDetailsScreen';
 import HistoryScreenWithback from '../screens/mainscreens/HistoryScreenWithback';
 import UserInvoiceScreen from '../screens/mainscreens/InvoiceScreen';
 import CmsScreen from '../screens/mainscreens/CmsScreen';
+import NotificationScreen from '../screens/mainscreens/NotificationScreen';
 
 
 
@@ -23,6 +24,7 @@ const StackNavigator = () => {
         <Stack.Screen name="HistoryScreenWithback" component={HistoryScreenWithback} options={{ headerShown: false }} />
         <Stack.Screen name="UserInvoiceScreen" component={UserInvoiceScreen} options={{ headerShown: false }} />
         <Stack.Screen name="CmsScreen" component={CmsScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="NotificationScreen" component={NotificationScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
   );
 };
