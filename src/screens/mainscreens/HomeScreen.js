@@ -1532,6 +1532,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 
 const { width, height } = Dimensions.get('window');
+const MAX_STOPS = 5;
 
 // ScheduleModal component with its own styles
 const ScheduleModal = ({ visible, onClose, selectedDateTime, onConfirm, formatDateTime }) => {
@@ -1846,6 +1847,8 @@ const HomeScreen = ({ navigation }) => {
     const sheetRef = useRef(null);
     const [pickup, setPickup] = useState('');
     const [drop, setDrop] = useState('');
+    const [stops, setStops] = useState([]);
+    // 'pickup' | 'drop' | 'stop-<index>' (edit a stop) | 'stop-new' (add a stop)
     const [activeField, setActiveField] = useState(null);
     const serviceSheetRef = useRef(null);
     const ConfirmsheetRef = useRef(null);
@@ -1941,6 +1944,11 @@ const HomeScreen = ({ navigation }) => {
             dropoffLng: drop.longitude,
             pickup_address: pickup.description,
             dropoff_address: drop.description,
+            stops: stops.map(stop => ({
+                address: stop.description,
+                lat: stop.latitude,
+                lng: stop.longitude,
+            })),
             vehicleTypeId: rideType,
             fare_estimate: fare,
             final_fare: fare,
@@ -1963,6 +1971,7 @@ const HomeScreen = ({ navigation }) => {
                 setShowScheduleModal(false);
                 setPickup('');
                 setDrop('');
+                setStops([]);
                 setRIDETYPE('');
                 setDistance('');
                 setFare('');
@@ -2023,6 +2032,37 @@ const HomeScreen = ({ navigation }) => {
             CustomToast.show('Ride scheduled for ' + formatDateTime(finalDate));
         }
         sendRideRequest(RIDETYPE?.value, finalDate);
+    };
+
+    const openLocationSearch = (field) => {
+        setActiveField(field);
+        sheetRef.current?.open();
+    };
+
+    const getActiveFieldValue = () => {
+        if (activeField === 'pickup') return pickup;
+        if (activeField === 'drop') return drop;
+        if (activeField?.startsWith('stop-') && activeField !== 'stop-new') {
+            return stops[Number(activeField.slice(5))] || '';
+        }
+        return '';
+    };
+
+    const handleLocationSelect = (location) => {
+        if (activeField === 'pickup') {
+            setPickup(location);
+        } else if (activeField === 'drop') {
+            setDrop(location);
+        } else if (activeField === 'stop-new') {
+            setStops(prev => (prev.length < MAX_STOPS ? [...prev, location] : prev));
+        } else if (activeField?.startsWith('stop-')) {
+            const index = Number(activeField.slice(5));
+            setStops(prev => prev.map((stop, i) => (i === index ? location : stop)));
+        }
+    };
+
+    const removeStop = (index) => {
+        setStops(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleRideSelect = (rideType) => {
@@ -2348,10 +2388,7 @@ const HomeScreen = ({ navigation }) => {
             {!showDriverPopup && !driverInfo && !loading && (
                 <View style={styles.topOverlay}>
                     <View style={styles.searchCard}>
-                        <TouchableWithoutFeedback onPress={() => {
-                            setActiveField('pickup');
-                            sheetRef.current?.open();
-                        }}>
+                        <TouchableWithoutFeedback onPress={() => openLocationSearch('pickup')}>
                             <View style={styles.searchRow}>
                                 <Ionicons name="navigate-outline" size={20} color={Color.apptheme} />
                                 <TextInput
@@ -2371,10 +2408,30 @@ const HomeScreen = ({ navigation }) => {
 
                         <View style={styles.separator} />
 
-                        <TouchableWithoutFeedback onPress={() => {
-                            setActiveField('drop');
-                            sheetRef.current?.open();
-                        }}>
+                        {stops.map((stop, index) => (
+                            <React.Fragment key={`stop-${index}`}>
+                                <TouchableWithoutFeedback onPress={() => openLocationSearch(`stop-${index}`)}>
+                                    <View style={styles.searchRow}>
+                                        <View style={styles.stopBadge}>
+                                            <Text style={styles.stopBadgeText}>{index + 1}</Text>
+                                        </View>
+                                        <TextInput
+                                            placeholder={`Stop ${index + 1}`}
+                                            placeholderTextColor="#888"
+                                            style={[styles.textInput, { flex: 1 }]}
+                                            value={stop.description}
+                                            editable={false}
+                                        />
+                                        <TouchableOpacity onPress={() => removeStop(index)}>
+                                            <Ionicons name="remove-circle-outline" size={20} color="#e53935" />
+                                        </TouchableOpacity>
+                                    </View>
+                                </TouchableWithoutFeedback>
+                                <View style={styles.separator} />
+                            </React.Fragment>
+                        ))}
+
+                        <TouchableWithoutFeedback onPress={() => openLocationSearch('drop')}>
                             <View style={styles.searchRow}>
                                 <Ionicons name="location-outline" size={20} color={Color.apptheme} />
                                 <TextInput
@@ -2391,6 +2448,15 @@ const HomeScreen = ({ navigation }) => {
                                 )}
                             </View>
                         </TouchableWithoutFeedback>
+
+                        {stops.length < MAX_STOPS && (
+                            <TouchableOpacity style={styles.addStopButton} onPress={() => openLocationSearch('stop-new')}>
+                                <Ionicons name="add-circle-outline" size={18} color={Color.apptheme} />
+                                <Text style={styles.addStopText}>
+                                    Add stop{stops.length > 0 ? ` (${stops.length}/${MAX_STOPS})` : ''}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
 
                         <View style={styles.bookingToggleContainer}>
                             <Text style={styles.bookingToggleLabel}>Booking Type:</Text>
@@ -2455,18 +2521,16 @@ const HomeScreen = ({ navigation }) => {
 
             <LocationSearchSheet
                 sheetRef={sheetRef}
-                initialValue={activeField === 'pickup' ? pickup : drop}
+                initialValue={getActiveFieldValue()}
                 activeField={activeField}
-                onSelect={(location) => {
-                    if (activeField === 'pickup') setPickup(location);
-                    if (activeField === 'drop') setDrop(location);
-                }}
+                onSelect={handleLocationSelect}
             />
 
             <ConfirmRideSheet
                 ref={ConfirmsheetRef}
                 pickup={pickup}
                 drop={drop}
+                stops={stops}
                 vehicle={RIDETYPE}
                 onFareCalculated={handleFareCalculation}
                 onConfirm={handleConfirm}
@@ -2477,6 +2541,7 @@ const HomeScreen = ({ navigation }) => {
                 onSelect={handleRideSelect}
                 pickup={pickup}
                 drop={drop}
+                stops={stops}
             />
 
             <ScheduleModal
@@ -2578,6 +2643,24 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     separator: { height: 8 },
+    stopBadge: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: '#f59e0b',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    stopBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+    addStopButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+        marginTop: 6,
+        marginLeft: 16,
+        paddingVertical: 4,
+    },
+    addStopText: { marginLeft: 6, fontSize: 14, fontWeight: '600', color: Color.apptheme },
     bookingToggleContainer: {
         flexDirection: 'row',
         alignItems: 'center',

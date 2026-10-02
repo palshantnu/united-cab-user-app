@@ -8,7 +8,7 @@ import { useDispatch } from 'react-redux';
 import { getRideRoute } from '../utils/getDistance';
 import { IMAGE_BASE_URL } from '../../API/api';
 
-const RideOptionsSheet = ({ pickup, drop, sheetRef, onSelect }) => {
+const RideOptionsSheet = ({ pickup, drop, stops = [], sheetRef, onSelect }) => {
     const [vehicleTypes, setVehicleTypes] = useState([]);
     const [distance, setDistance] = useState(null);
     const { t } = useTranslation();
@@ -45,9 +45,10 @@ const RideOptionsSheet = ({ pickup, drop, sheetRef, onSelect }) => {
     useEffect(() => {
         const calculateDistance = async () => {
             if (!pickup || !drop) return;
+            setDistance(null);
 
             try {
-                const route = await getRideRoute(pickup, drop);
+                const route = await getRideRoute(pickup, drop, stops);
 
                 if (route) {
                     setDistance(route.miles);
@@ -58,7 +59,7 @@ const RideOptionsSheet = ({ pickup, drop, sheetRef, onSelect }) => {
         };
 
         calculateDistance();
-    }, [pickup, drop]);
+    }, [pickup, drop, stops]);
 
 
     useEffect(() => {

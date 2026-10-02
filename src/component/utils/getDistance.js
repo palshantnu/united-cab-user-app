@@ -31,31 +31,35 @@ const toWaypoint = (point) =>
     : `${point.latitude},${point.longitude}`;
 
 // Road distance exactly like Google Maps app: driving route, fastest with live traffic.
-// Returns { miles, meters, durationMin } — miles rounded to 1 decimal like Google Maps shows.
-export const getRideRoute = async (pickup, drop, apiKey = DEFAULT_API_KEY) => {
+// Stops are visited in the order the user added them (pickup → stop 1 → … → drop).
+// Returns { miles, meters, durationMin } for the whole trip — miles rounded to 1 decimal like Google Maps shows.
+export const getRideRoute = async (pickup, drop, stops = [], apiKey = DEFAULT_API_KEY) => {
   if (!pickup?.latitude || !drop?.latitude) return null;
 
   const origin = toWaypoint(pickup);
   const destination = toWaypoint(drop);
-  const key = `${origin}|${destination}`;
+  const waypoints = (stops || []).filter(s => s?.latitude).map(toWaypoint);
+  const key = [origin, ...waypoints, destination].join('|');
   if (routeCache[key]) return routeCache[key];
 
   const url =
     'https://maps.googleapis.com/maps/api/directions/json' +
     `?origin=${encodeURIComponent(origin)}` +
     `&destination=${encodeURIComponent(destination)}` +
+    (waypoints.length ? `&waypoints=${encodeURIComponent(waypoints.join('|'))}` : '') +
     `&mode=driving&departure_time=now&units=imperial&key=${apiKey}`;
 
   const res = await fetch(url);
   const data = await res.json();
   if (!data.routes?.length) return null;
 
-  const leg = data.routes[0].legs[0];
-  const meters = leg.distance.value;
+  const legs = data.routes[0].legs;
+  const meters = legs.reduce((sum, leg) => sum + leg.distance.value, 0);
+  const seconds = legs.reduce((sum, leg) => sum + (leg.duration_in_traffic || leg.duration).value, 0);
   const route = {
     meters,
     miles: Number((meters * METERS_TO_MILES).toFixed(1)),
-    durationMin: Math.round((leg.duration_in_traffic || leg.duration).value / 60),
+    durationMin: Math.round(seconds / 60),
   };
   routeCache[key] = route;
   return route;
@@ -71,6 +75,7 @@ export const getRoadDistanceInMiles = async (
   const route = await getRideRoute(
     { latitude: originLat, longitude: originLng },
     { latitude: destLat, longitude: destLng },
+    [],
     apiKey
   );
   return route ? route.miles : null;

@@ -6,7 +6,7 @@ import { Color } from '../../theme';
 import FontAwesome from 'react-native-vector-icons/FontAwesome'; // or use react-native-vector-icons
 import { getRideRoute } from '../utils/getDistance';
 
-const ConfirmRideSheet = forwardRef(({ pickup, drop, vehicle, onConfirm,onFareCalculated }, ref) => {
+const ConfirmRideSheet = forwardRef(({ pickup, drop, stops = [], vehicle, onConfirm,onFareCalculated }, ref) => {
 
 const [distance, setDistance] = React.useState(null);
 const [fare, setFare] = React.useState(null);
@@ -28,9 +28,11 @@ const [fare, setFare] = React.useState(null);
     React.useEffect(() => {
   const calculateFare = async () => {
     if (!pickup || !drop || !vehicle) return;
+    setDistance(null);
+    setFare(null);
 
     try {
-      const route = await getRideRoute(pickup, drop);
+      const route = await getRideRoute(pickup, drop, stops);
       if (!route) return;
       const roadDistance = route.miles;
 
@@ -54,7 +56,7 @@ const [fare, setFare] = React.useState(null);
   };
 
   calculateFare();
-}, [pickup, drop, vehicle]);
+}, [pickup, drop, stops, vehicle]);
 
 
     React.useEffect(() => {
@@ -65,7 +67,7 @@ const [fare, setFare] = React.useState(null);
     return (
         <RBSheet
             ref={ref}
-            height={400}
+            height={400 + stops.length * 34}
             openDuration={250}
             customStyles={{
                 container: {
@@ -86,6 +88,14 @@ const [fare, setFare] = React.useState(null);
                         <Text style={styles.label}>Pickup</Text>
                         <Text style={styles.value}>{pickup.description}</Text>
                     </View>
+
+                    {stops.map((stop, index) => (
+                        <View style={styles.row} key={`stop-${index}`}>
+                            <FontAwesome name="dot-circle-o" size={16} color="#f59e0b" />
+                            <Text style={styles.label}>Stop {index + 1}</Text>
+                            <Text style={styles.value} numberOfLines={1}>{stop.description}</Text>
+                        </View>
+                    ))}
 
                     <View style={styles.row}>
                         <FontAwesome name="map-pin" size={18} color="#555" />
@@ -114,7 +124,11 @@ const [fare, setFare] = React.useState(null);
   </Text>
 </View>
 
-                <TouchableOpacity style={styles.button} onPress={onConfirm}>
+                <TouchableOpacity
+                    style={[styles.button, !fare && styles.buttonDisabled]}
+                    onPress={onConfirm}
+                    disabled={!fare}
+                >
                     <Text style={styles.buttonText}>Confirm & Book</Text>
                 </TouchableOpacity>
             </View>
@@ -179,6 +193,9 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         alignItems: 'center',
         elevation: 2,
+    },
+    buttonDisabled: {
+        opacity: 0.6,
     },
     buttonText: {
         color: '#fff',

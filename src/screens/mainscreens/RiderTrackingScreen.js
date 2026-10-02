@@ -47,6 +47,10 @@ const RiderTrackingScreen = ({ route, navigation }) => {
     const dropLat = parseCoordinate(rideData.dropoff_lat);
     const dropLng = parseCoordinate(rideData.dropoff_lng);
 
+    // Socket updates carry the latest stop statuses; fall back to the ride we navigated with
+    const stops = (rideStatus?.stops ?? rideData.stops) || [];
+    const nextStopIndex = stops.findIndex(stop => stop.status !== 'completed');
+
 
     const [eta, setEta] = useState(null);
     const [distanceKm, setDistanceKm] = useState(null);
@@ -113,6 +117,7 @@ const RiderTrackingScreen = ({ route, navigation }) => {
 
         console.log('rideId', rideId);
         const ride_id = rideId
+        socket.emit('joinRideRoom', { rideId, userType: 1, userId: user.id });
         socket.emit('getRideStatusFromServer', { rideId });
         socket.emit('joinRide', ride_id);
         socket.on("driverLiveLocation", (data) => {
@@ -216,8 +221,18 @@ const RiderTrackingScreen = ({ route, navigation }) => {
             };
         }
 
-        // After pickup
+        // After pickup — go through remaining stops first, then drop
         if (status === 'arrived' || status === 'started' || status === 'ongoing') {
+            if (nextStopIndex !== -1) {
+                const stop = stops[nextStopIndex];
+                return {
+                    label: `Stop ${nextStopIndex + 1}`,
+                    destination: {
+                        latitude: parseCoordinate(stop.lat),
+                        longitude: parseCoordinate(stop.lng),
+                    },
+                };
+            }
             return {
                 label: 'Drop',
                 destination: {
@@ -283,6 +298,15 @@ const RiderTrackingScreen = ({ route, navigation }) => {
                 )}
 
                 <Marker coordinate={{ latitude: pickupLat, longitude: pickupLng }} title="Pickup" />
+                {stops.map((stop, index) => (
+                    <Marker
+                        key={`stop-${index}`}
+                        coordinate={{ latitude: parseCoordinate(stop.lat), longitude: parseCoordinate(stop.lng) }}
+                        pinColor="orange"
+                        title={`Stop ${index + 1}`}
+                        description={stop.address}
+                    />
+                ))}
                 <Marker coordinate={{ latitude: dropLat, longitude: dropLng }} pinColor="green" title="Drop-off" />
 
                 {/* Route - only after ride started */}
@@ -348,6 +372,20 @@ const RiderTrackingScreen = ({ route, navigation }) => {
                         <Ionicons name="location-outline" size={20} color="#333" />
                         <Text style={styles.label}>Pickup: {rideData.pickup_address}</Text>
                     </View>
+
+                    {stops.map((stop, index) => (
+                        <View style={styles.row} key={`stop-${index}`}>
+                            <Ionicons
+                                name={stop.status === 'completed' ? 'checkmark-circle' : 'ellipse-outline'}
+                                size={20}
+                                color={stop.status === 'completed' ? '#4caf50' : '#f59e0b'}
+                            />
+                            <Text style={[styles.label, { flex: 1 }]} numberOfLines={1}>
+                                Stop {index + 1}: {stop.address}
+                            </Text>
+                            {stop.status === 'arrived' && <Text style={styles.stopStatus}>Driver here</Text>}
+                        </View>
+                    ))}
 
                     <View style={styles.row}>
                         <Ionicons name="flag-outline" size={20} color="#333" />
@@ -426,6 +464,12 @@ const RiderTrackingScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
+    stopStatus: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: '#f59e0b',
+        marginLeft: 6,
+    },
     bottomCard: {
         position: 'absolute',
         bottom: 0,
