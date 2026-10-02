@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import { Color } from '../../theme';
 import FontAwesome from 'react-native-vector-icons/FontAwesome'; // or use react-native-vector-icons
-import { getRoadDistanceInMiles } from '../utils/getDistance';
+import { getRideRoute } from '../utils/getDistance';
 
 const ConfirmRideSheet = forwardRef(({ pickup, drop, vehicle, onConfirm,onFareCalculated }, ref) => {
 
@@ -30,14 +30,9 @@ const [fare, setFare] = React.useState(null);
     if (!pickup || !drop || !vehicle) return;
 
     try {
-      const roadDistance = await getRoadDistanceInMiles(
-        pickup.latitude,
-        pickup.longitude,
-        drop.latitude,
-        drop.longitude
-      );
-
-      if (!roadDistance) return;
+      const route = await getRideRoute(pickup, drop);
+      if (!route) return;
+      const roadDistance = route.miles;
 
       const baseKm = vehicle.minimum_km;
       const baseFare = vehicle.minimum_fare;

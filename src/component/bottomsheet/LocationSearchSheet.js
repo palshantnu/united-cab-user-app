@@ -74,6 +74,7 @@ const LocationSearchSheet = ({ sheetRef, onSelect, initialValue, activeField }) 
         description: place.description,
         latitude: location.lat,
         longitude: location.lng,
+        place_id: place.place_id,
       });
 
     } catch (err) {

@@ -5,7 +5,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from 'rea
 import RBSheet from 'react-native-raw-bottom-sheet';
 import { getData } from '../../API';
 import { useDispatch } from 'react-redux';
-import { getRoadDistanceInMiles } from '../utils/getDistance';
+import { getRideRoute } from '../utils/getDistance';
 import { IMAGE_BASE_URL } from '../../API/api';
 
 const RideOptionsSheet = ({ pickup, drop, sheetRef, onSelect }) => {
@@ -47,15 +47,10 @@ const RideOptionsSheet = ({ pickup, drop, sheetRef, onSelect }) => {
             if (!pickup || !drop) return;
 
             try {
-                const roadDistance = await getRoadDistanceInMiles(
-                    pickup.latitude,
-                    pickup.longitude,
-                    drop.latitude,
-                    drop.longitude
-                );
+                const route = await getRideRoute(pickup, drop);
 
-                if (roadDistance) {
-                    setDistance(roadDistance);
+                if (route) {
+                    setDistance(route.miles);
                 }
             } catch (e) {
                 console.log('RideOptions distance error:', e);
