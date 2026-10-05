@@ -2590,7 +2590,8 @@ const HomeScreen = ({ navigation }) => {
                             ))}
                             <Text style={styles.ratingText}>4.9 (120 reviews)</Text>
                         </View>
-                        <Text style={styles.vehicleInfo}>{'Toyota Prius'} • {'MH12AB1234'}</Text>
+                        {console.log('Driver Details:', driverDetails)}
+                        <Text style={styles.vehicleInfo}>{driverDetails?.vehicle_model} • {driverDetails?.vehicle_number}</Text>
                         <TouchableOpacity
                             style={styles.trackButton}
                             onPress={() => {

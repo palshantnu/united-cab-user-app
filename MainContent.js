@@ -15,6 +15,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Color } from './src/theme';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import Authnavigation from './src/navigation/Authnavigation';
+import AppUpdateModal from './src/component/AppUpdateModal';
 
 const MainContent = () => {
   const insets = useSafeAreaInsets();
@@ -68,6 +69,7 @@ const MainContent = () => {
           <Authnavigation />
         </SafeAreaView>
       </NavigationContainer>
+      <AppUpdateModal />
     </GestureHandlerRootView>
   );
 };
